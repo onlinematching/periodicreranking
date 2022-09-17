@@ -28,7 +28,7 @@ template <typename F1> f64 quick_min_H(F1 H, bool show_detail = false) {
 template <typename F1> f64 min_H(F1 H, bool show_detail = false) {
   f64 min = std::numeric_limits<double>::max();
   f64 z1 = 0;
-  for (f64 z1 = 0; z1 < 1 + tol; z1 += precise) {
+  for (f64 z1 = 0; z1 < 1 + tol; z1 += step) {
     if (show_detail) {
       std::cout << z1 << std::endl;
     }
@@ -51,8 +51,8 @@ template <typename F1> f64 min_H(F1 H, bool show_detail = false) {
 template <class F>
 f64 inner_calculater(F g, bool show_detail = false, bool use_quick = false) {
   auto G = [&g](f64 x) -> f64 {
-    return boost::math::quadrature::gauss_kronrod<double, 23>::integrate(
-        g, 0, x, 5, tol);
+    return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(
+        g, 0, x, 9, tol);
   };
   auto H = [&G, &g](f64 z1, f64 z2, f64 x) -> f64 {
     f64 a1 = G(z2) - G(z1);
@@ -104,7 +104,7 @@ int main(int argc, char *argv[]) {
 
         mutex.lock();
         i++;
-        if (i % 4000 == 0) {
+        if (i % 1000 == 0) {
           std::cout << "i = " << i << std::endl;
         }
         if (max_now > max) {

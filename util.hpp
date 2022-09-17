@@ -22,7 +22,7 @@ template <class Axx> Axx _a_generator(const Axx &a) {
 inline A100 a_generator(const A100 &a) {
   static std::random_device rd;
   static std::mt19937 gen(rd());
-  static std::normal_distribution<f64> dist(0, step);
+  static std::uniform_real_distribution<f64> dist(-step / 4., step / 4.);
   static std::uniform_int_distribution<usize> dis_usize(0, 99);
   A100 a_next = a;
   usize i = dis_usize(gen);
