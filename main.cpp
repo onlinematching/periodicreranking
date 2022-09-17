@@ -28,12 +28,12 @@ template <typename F1> f64 quick_min_H(F1 H, bool show_detail = false) {
 template <typename F1> f64 min_H(F1 H, bool show_detail = false) {
   f64 min = std::numeric_limits<double>::max();
   f64 z1 = 0;
-  for (f64 z1 = 0; z1 < 1 + tol; z1 += step) {
+  for (f64 z1 = 0; z1 < 1 + tol; z1 += precise) {
     if (show_detail) {
       std::cout << z1 << std::endl;
     }
-    for (f64 z2 = z1; z2 < 1 + tol; z2 += step) {
-      for (f64 y = 0; y < 1 + tol; y += step) {
+    for (f64 z2 = z1; z2 < 1 + tol; z2 += precise) {
+      for (f64 y = 0; y < 1 + tol; y += precise) {
         f64 h = H(z1, z2, y);
         if (h < min) {
           min = h;
@@ -52,7 +52,7 @@ template <class F>
 f64 inner_calculater(F g, bool show_detail = false, bool use_quick = false) {
   auto G = [&g](f64 x) -> f64 {
     return boost::math::quadrature::gauss_kronrod<double, 23>::integrate(
-        g, 0, x, 9, tol);
+        g, 0, x, 5, tol);
   };
   auto H = [&G, &g](f64 z1, f64 z2, f64 x) -> f64 {
     f64 a1 = G(z2) - G(z1);
@@ -84,17 +84,16 @@ f64 calculater(const A100 &a, bool show_detail = false,
 
 int main(int argc, char *argv[]) {
   // print(next_generationa(a_end_10));
-  // return 0;
-  A100 a = g_pre_100;
-  f64 max = std::numeric_limits<f64>::min();
-  std::cout << calculater(a, true, true) << std::endl;
-  return 0;
+  // A100 a = g_pre_100;
+  A100 a = a_mid_100;
+  f64 max = calculater(a, true, false);
+  std::cout << max << std::endl;
   using namespace std::chrono_literals;
   std::mutex mutex{};
   usize n_core =
       std::max(std::thread::hardware_concurrency() - 1, static_cast<usize>(1));
   std::cout << "core num: " << n_core << std::endl;
-  std::this_thread::sleep_for(5000ms);
+  std::this_thread::sleep_for(3000ms);
 
   for (usize i = 0;;) {
     std::vector<std::thread> threads{};
@@ -105,7 +104,7 @@ int main(int argc, char *argv[]) {
 
         mutex.lock();
         i++;
-        if (i % 400 == 0) {
+        if (i % 4000 == 0) {
           std::cout << "i = " << i << std::endl;
         }
         if (max_now > max) {
