@@ -22,17 +22,20 @@ template <class Axx> Axx _a_generator(const Axx &a) {
 inline A100 a_generator(const A100 &a) {
   static std::random_device rd;
   static std::mt19937 gen(rd());
-  static std::uniform_real_distribution<f64> dist(-step / 4., step / 4.);
-  static std::uniform_int_distribution<usize> dis_usize(0, 99);
+  static std::uniform_real_distribution<f64> dist(-step, step);
+  static std::uniform_int_distribution<int> dis_usize(0, 99);
   A100 a_next = a;
-  usize i = dis_usize(gen);
-  a_next[i] = a[i] + dist(gen);
-  if (a_next[i] < 0) {
-    a_next[i] = -a_next[i];
+  int j = dis_usize(gen);
+  for (usize i = std::max(j - 2, 0); i <= std::min(j + 2, 99); i++) {
+    a_next[i] = a[i] + dist(gen);
+    if (a_next[i] < 0) {
+      a_next[i] = -a_next[i];
+    }
+    if (a_next[i] > 1) {
+      a_next[i] = 2 - a_next[i];
+    }
   }
-  if (a_next[i] > 1) {
-    a_next[i] = 2 - a_next[i];
-  }
+
   std::sort(a_next.begin(), a_next.end());
   return a_next;
 }
@@ -47,6 +50,14 @@ template <class Axx> void print(Axx const &a) {
 
 [[gnu::always_inline]] inline f64 _g(f64 x) {
   f64 Q = std::exp(beta * (x - 1));
+  return Q;
+}
+
+[[gnu::always_inline]] inline f64 my_g(f64 x) {
+  if (x >= 1) {
+    return 1;
+  }
+  f64 Q = std::exp(0.86 * (x - 1) * (1 - 0.055 * std::cos(1 / (x - 1) * 2.8)));
   return Q;
 }
 

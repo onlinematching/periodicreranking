@@ -35,8 +35,10 @@ template <typename F1> f64 min_H(F1 H, bool show_detail = false) {
     for (f64 z2 = z1; z2 < 1 + tol; z2 += precise) {
       for (f64 y = 0; y < 1 + tol; y += precise) {
         f64 h = H(z1, z2, y);
-        if (h < min) {
-          min = h;
+        if (h < min + 1e-4) {
+          if (h < min) {
+            min = h;
+          }
           if (show_detail) {
             std::cout << "z1 = " << z1 << " ;z2 = " << z2 << " ;y =  " << y
                       << "; min = " << min << std::endl;
@@ -82,12 +84,42 @@ f64 calculater(const A100 &a, bool show_detail = false,
   return inner_calculater(g, show_detail, use_quick);
 }
 
+
+void verify(const A100 &a) {
+  auto g = [&a](f64 x) -> f64 {
+    if (x >= 1.)
+      return 1;
+    const auto n = static_cast<usize>(x / step);
+    const f64 res = x - n * step;
+    const f64 h = a[n + 1] - a[n];
+    const f64 delta = h * res / step;
+    return a[n] + delta;
+  };
+  auto G = [&g](f64 x) -> f64 {
+    return boost::math::quadrature::gauss_kronrod<double, 15>::integrate(
+        g, 0, x, 9, tol);
+  };
+  auto F = [&](f64 x)  -> f64{
+    return G(x) - g(x) + g(0);
+  };
+  f64 z1 = 0;
+  for (f64 z1 = 0; z1 < 1 + tol; z1 += step) {
+    std::cout << "z1 = " << z1 << ", f(z1) = " << F(z1) << std::endl;
+  }
+}
+
 int main(int argc, char *argv[]) {
   // print(next_generationa(a_end_10));
   // A100 a = g_pre_100;
+  // std::cout << inner_calculater(my_g, true) << std::endl;
+  // return 0;
+  // verify(a_mid_100);
+  // return 0; 
+  // calculater(g_pre_100, true, false);
   A100 a = a_mid_100;
   f64 max = calculater(a, true, false);
   std::cout << max << std::endl;
+  return 0;
   using namespace std::chrono_literals;
   std::mutex mutex{};
   usize n_core =
