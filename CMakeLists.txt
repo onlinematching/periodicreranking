@@ -14,6 +14,7 @@ if(Boost_FOUND)
   add_executable(
     ${PROJECT_NAME}
     hyperparameter.h
+    util.hpp
     main.cpp
   )
   target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})

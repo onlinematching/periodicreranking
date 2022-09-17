@@ -1,26 +1,25 @@
-#include "hyperparameter.h"
+#include "util.hpp"
+#include <algorithm>
+#include <bits/ranges_algo.h>
 #include <boost/math/quadrature/gauss_kronrod.hpp>
 #include <boost/numeric/odeint.hpp>
+#include <limits>
 #include <mutex>
+#include <random>
 #include <thread>
 #include <type_traits>
 
-f64 _g(f64 x) {
-  f64 Q = std::exp(beta * (x - 1));
-  return Q;
-}
-
 template <typename F1> f64 min_H(F1 H) {
   f64 min = std::numeric_limits<double>::max();
-  for (f64 z1 = 0; z1 < 1; z1 += step) {
-    std::cout << z1 << std::endl;
-    for (f64 z2 = z1; z2 < 1; z2 += step) {
-      for (f64 y = 0; y < 1; y += step) {
+  for (f64 z1 = 0; z1 < 1 + tol; z1 += step) {
+    // std::cout << z1 << std::endl;
+    for (f64 z2 = z1; z2 < 1 + tol; z2 += step) {
+      for (f64 y = 0; y < 1 + tol; y += step) {
         f64 h = H(z1, z2, y);
         if (h < min) {
           min = h;
-          std::cout << "z1 = " << z1 << " ;z2 = " << z2 << " ;y =  " << y
-                    << "; min = " << min << std::endl;
+          // std::cout << "z1 = " << z1 << " ;z2 = " << z2 << " ;y =  " << y
+          //           << "; min = " << min << std::endl;
         }
       }
     }
@@ -28,7 +27,7 @@ template <typename F1> f64 min_H(F1 H) {
   return min;
 }
 
-void g_generator(const A &a) {
+f64 calculater(const A10 &a) {
   auto g = [&a](f64 x) -> f64 {
     if (x == 1.)
       return 1;
@@ -50,12 +49,58 @@ void g_generator(const A &a) {
     return a1 + a2 + a3 + a4;
   };
   auto minnow = min_H(H);
-  std::cout << minnow << std::endl;
+  return minnow;
+}
+
+template<class Axx>
+void print(Axx const &a) {
+  std::cout << "a = [";
+  for (auto x : a) {
+    std::cout << x << ", ";
+  }
+  std::cout << "]\n";
+}
+
+A10 a_generator(const A10 &a) {
+  static std::random_device rd;
+  static std::mt19937 gen(rd());
+  static std::uniform_real_distribution<double> dist(-step, step);
+  A10 a_next{};
+  a_next[a.size() - 1] = 1.;
+  for (usize i = 0; i < a.size() - 1; ++i) {
+    a_next[i] = a[i] + dist(gen);
+    if (a_next[i] < 0) {
+      a_next[i] = -a_next[i];
+    }
+    if (a_next[i] > 1) {
+      a_next[i] = 2 - a_next[i];
+    }
+  }
+  std::sort(a_next.begin(), a_next.end());
+  return a_next;
 }
 
 int main(int argc, char *argv[]) {
-  // min_H(H);
-  A a = a_init;
-  g_generator(a);
+  print(next_generationa(a_end_10));
+  return 0;
+  A10 a = a_init_10;
+  f64 max = std::numeric_limits<double>::min();
+  for (usize i = 0;; i++) {
+    if (i % 2000 == 0) {
+      std::cout << i << std::endl;
+    }
+
+    auto a_next = a_generator(a);
+    auto max_now = calculater(a_next);
+    if (max_now > max) {
+      max = max_now;
+      std::cout << i << std::endl;
+      std::cout << max << std::endl;
+      print(a_next);
+      std::cout << "-----------------------------" << std::endl;
+      a = a_next;
+    }
+  }
+  //
   return 0;
 }
